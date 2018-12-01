@@ -8,7 +8,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>excel365versioner</name>
+	<name>xl365vc</name>
 	<description>Excel 365 Version Control API</description>
 
 	<parent>

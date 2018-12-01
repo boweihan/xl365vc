@@ -1,12 +1,12 @@
-package com.excel365versioner.api;
+package com.xl365vc.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Excel365versionerApplication {
+public class Application {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Excel365versionerApplication.class, args);
+		SpringApplication.run(Application.class, args);
 	}
 }
