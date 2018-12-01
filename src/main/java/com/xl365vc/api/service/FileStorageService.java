@@ -25,9 +25,10 @@ import com.xl365vc.api.exception.FileStorageException;
 import com.xl365vc.api.exception.InvalidEntityException;
 import com.xl365vc.api.exception.MyFileNotFoundException;
 import com.xl365vc.api.property.FileStorageProperties;
+import com.xl365vc.api.service.interfaces.FileStorageInterface;
 
 @Service
-public class FileStorageService {
+public class FileStorageService implements FileStorageInterface {
 
 	private final Path fileStorageLocation;
 	
@@ -43,6 +44,7 @@ public class FileStorageService {
         }
     }
 
+    @Override
     public String storeFile(MultipartFile file) {
         // Normalize file name
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
@@ -63,6 +65,7 @@ public class FileStorageService {
         }
     }
     
+    @Override
     public Resource loadFileAsResource(String fileName) {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
@@ -77,6 +80,7 @@ public class FileStorageService {
         }
     }
     
+    @Override
     public void deleteFile(String fileName) {
     	try {
     		Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
@@ -90,7 +94,7 @@ public class FileStorageService {
     		throw new FileStorageException("Unable to delete file", e);
     	}
     }
-    
+
     public List<FileVersion> getAvailableFileVersions() {
     	List<FileVersion> fileNames = new ArrayList<>();
     	try (Stream<Path> paths = Files.walk(this.fileStorageLocation)) {
