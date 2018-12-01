@@ -1,4 +1,4 @@
-package com.xl365vc.api.properties;
+package com.xl365vc.api.property;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
