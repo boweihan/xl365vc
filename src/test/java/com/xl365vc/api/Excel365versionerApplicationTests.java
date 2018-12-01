@@ -1,4 +1,4 @@
-package com.excel365versioner.api.excel365versioner;
+package com.xl365vc.api;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
