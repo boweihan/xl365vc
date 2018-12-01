@@ -24,6 +24,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.xl365vc.api.payload.UploadFileResponse;
 import com.xl365vc.api.service.FileStorageService;
+import com.xl365vc.api.service.interfaces.FileStorageInterface;
 
 @RestController
 public class FileController {
@@ -31,7 +32,7 @@ public class FileController {
 	private static final Logger logger = LoggerFactory.getLogger(FileController.class);
 
 	@Autowired
-	private FileStorageService fileStorageService;
+	private FileStorageInterface fileStorageService;
 
 	@PostMapping("/uploadFile")
     public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {

@@ -22,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.xl365vc.api.entity.FileVersion;
 import com.xl365vc.api.exception.FileStorageException;
-import com.xl365vc.api.exception.InvalidEntityException;
 import com.xl365vc.api.exception.MyFileNotFoundException;
 import com.xl365vc.api.property.FileStorageProperties;
 import com.xl365vc.api.service.interfaces.FileStorageInterface;
@@ -95,7 +94,8 @@ public class FileStorageService implements FileStorageInterface {
     	}
     }
 
-    public List<FileVersion> getAvailableFileVersions() {
+    @Override
+    public List<FileVersion> getAvailableFiles() {
     	List<FileVersion> fileNames = new ArrayList<>();
     	try (Stream<Path> paths = Files.walk(this.fileStorageLocation)) {
     	    paths

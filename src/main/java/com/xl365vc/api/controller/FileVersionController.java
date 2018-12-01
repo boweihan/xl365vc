@@ -25,7 +25,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.xl365vc.api.entity.FileVersion;
 import com.xl365vc.api.payload.FileVersionsResponse;
 import com.xl365vc.api.payload.UploadFileResponse;
-import com.xl365vc.api.service.FileStorageService;
+import com.xl365vc.api.service.interfaces.FileStorageInterface;
 
 @RestController
 @RequestMapping("/versions")
@@ -34,11 +34,11 @@ public class FileVersionController {
 	private static final Logger logger = LoggerFactory.getLogger(FileVersionController.class);
 
 	@Autowired
-	private FileStorageService fileStorageService;
+	private FileStorageInterface fileStorageService;
 
 	@GetMapping
 	public FileVersionsResponse getVersions() {
-		List<FileVersion> fileVersions = fileStorageService.getAvailableFileVersions();
+		List<FileVersion> fileVersions = fileStorageService.getAvailableFiles();
 		return new FileVersionsResponse(fileVersions);
 	}
 
