@@ -6,6 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -14,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.xl365vc.api.entity.FileVersion;
 import com.xl365vc.api.exception.FileStorageException;
+import com.xl365vc.api.exception.InvalidEntityException;
 import com.xl365vc.api.exception.MyFileNotFoundException;
 import com.xl365vc.api.property.FileStorageProperties;
 
@@ -30,8 +35,8 @@ public class FileStorageService {
 
         try {
             Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", ex);
+        } catch (Exception e) {
+            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", e);
         }
     }
 
@@ -50,8 +55,8 @@ public class FileStorageService {
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
             return fileName;
-        } catch (IOException ex) {
-            throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+        } catch (IOException e) {
+            throw new FileStorageException("Could not store file " + fileName + ". Please try again!", e);
         }
     }
     
@@ -64,8 +69,22 @@ public class FileStorageService {
             } else {
                 throw new MyFileNotFoundException("File not found " + fileName);
             }
-        } catch (MalformedURLException ex) {
-            throw new MyFileNotFoundException("File not found " + fileName, ex);
+        } catch (MalformedURLException e) {
+            throw new MyFileNotFoundException("File not found " + fileName, e);
         }
+    }
+    
+    public List<FileVersion> getAvailableFileVersions() {
+    	List<FileVersion> fileNames = new ArrayList<>();
+    	try (Stream<Path> paths = Files.walk(this.fileStorageLocation)) {
+    	    paths
+    	        .filter(Files::isRegularFile)
+    	        .forEach(p -> fileNames.add(
+    	        		new FileVersion(p.getFileName().toString())
+    	        ));
+    	}  catch (Exception e) {
+    		throw new InvalidEntityException("Unable to get available file names", e);
+    	}
+    	return fileNames;
     }
 }
