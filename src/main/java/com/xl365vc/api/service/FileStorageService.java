@@ -1,7 +1,10 @@
 package com.xl365vc.api.service;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -64,7 +67,7 @@ public class FileStorageService {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
-            if(resource.exists()) {
+            if (resource.exists()) {
                 return resource;
             } else {
                 throw new MyFileNotFoundException("File not found " + fileName);
@@ -74,16 +77,38 @@ public class FileStorageService {
         }
     }
     
+    public void deleteFile(String fileName) {
+    	try {
+    		Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+    		File file = new File(filePath.toString());
+    		if (file.delete()) {
+    			System.out.println("file successfully deleted");
+    		} else {
+    			throw new Exception();
+    		}
+    	} catch (Exception e) {
+    		throw new FileStorageException("Unable to delete file", e);
+    	}
+    }
+    
     public List<FileVersion> getAvailableFileVersions() {
     	List<FileVersion> fileNames = new ArrayList<>();
     	try (Stream<Path> paths = Files.walk(this.fileStorageLocation)) {
     	    paths
     	        .filter(Files::isRegularFile)
-    	        .forEach(p -> fileNames.add(
-    	        		new FileVersion(p.getFileName().toString())
-    	        ));
+    	        .forEach(p -> {
+					try {
+						fileNames.add(
+							new FileVersion(
+								URLEncoder.encode(p.getFileName().toString(), "UTF-8")
+							)
+						);
+					} catch (UnsupportedEncodingException e) {
+						throw new FileStorageException("File name unable to be utf-8 encoded", e);
+					}
+				});
     	}  catch (Exception e) {
-    		throw new InvalidEntityException("Unable to get available file names", e);
+    		throw new FileStorageException("Unable to get available file names", e);
     	}
     	return fileNames;
     }
