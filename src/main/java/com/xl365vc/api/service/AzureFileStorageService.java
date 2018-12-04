@@ -2,7 +2,14 @@ package com.xl365vc.api.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,9 +37,22 @@ public class AzureFileStorageService implements FileStorageInterface {
 
 	@Autowired
 	private CloudStorageAccount cloudStorageAccount;
-
 	private final String containerName = "xl365vc-container";
 	
+	private final Path fileStorageLocation;
+
+    @Autowired
+    public AzureFileStorageService(FileStorageProperties fileStorageProperties) {
+        this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir())
+                .toAbsolutePath().normalize();
+
+        try {
+            Files.createDirectories(this.fileStorageLocation);
+        } catch (Exception e) {
+            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", e);
+        }
+    }
+
 //    @Autowired
 //    public AzureFileStorageService(FileStorageProperties fileStorageProperties) {
 //        try {
@@ -69,14 +89,23 @@ public class AzureFileStorageService implements FileStorageInterface {
     @Override
     public Resource loadFileAsResource(String fileName) {
         try {
+        	fileName = URLDecoder.decode(fileName, "UTF-8");
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
 	        final CloudBlobContainer container = blobClient.getContainerReference(containerName);
 	        CloudBlockBlob blob = container.getBlockBlobReference(fileName);
-	        String tempFilePath = String.format("%temp-%s", System.getProperty("java.io.tmpdir"), fileName);
+	        String tempFilePath = this.fileStorageLocation + "/" + fileName;
+	        // download to temp directory
 	        blob.downloadToFile(tempFilePath);
-	        new File(tempFilePath).deleteOnExit();
-	        return new UrlResource(tempFilePath);
+	        // pull the resource from temp directory
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            if (resource.exists()) {
+                return resource;
+            } else {
+                throw new MyFileNotFoundException("File not found " + fileName);
+            }
         } catch (URISyntaxException | StorageException | IOException e) {
+        	System.out.println(e);
             throw new MyFileNotFoundException("File not found " + fileName, e);
         }
     }
@@ -84,11 +113,12 @@ public class AzureFileStorageService implements FileStorageInterface {
     @Override
     public void deleteFile(String fileName) {
         try {
+        	fileName = URLDecoder.decode(fileName, "UTF-8");
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
 	        final CloudBlobContainer container = blobClient.getContainerReference(containerName);
 	        CloudBlockBlob blob = container.getBlockBlobReference(fileName);
 	        blob.delete();
-        } catch (URISyntaxException | StorageException e) {
+        } catch (URISyntaxException | StorageException | UnsupportedEncodingException e) {
         	throw new FileStorageException("Unable to delete file", e);
         }
     }
@@ -102,7 +132,12 @@ public class AzureFileStorageService implements FileStorageInterface {
 	        final CloudBlobContainer container = blobClient.getContainerReference(containerName);
 
 	        for (ListBlobItem blob : container.listBlobs()) {
-	        	blob.getStorageUri();
+	        	String[] uriSegments = blob.getUri().toString().split("/");
+				fileNames.add(
+					new FileVersion(
+						uriSegments[uriSegments.length - 1]
+					)
+				);
 	        }
         } catch (URISyntaxException | StorageException e) {
         	throw new FileStorageException("Unable to get available file names", e);

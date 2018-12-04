@@ -81,8 +81,8 @@ public class FileVersionController {
                 .body(resource);
     }
 
-	@DeleteMapping("/name/{fileName}")
-	public void removeVersion(@PathVariable("fileName") String fileName) {
-		fileStorageService.deleteFile(fileName);
+	@DeleteMapping("/{name:.+}")
+	public void removeVersion(@PathVariable("name") String name) {
+		fileStorageService.deleteFile(name);
 	}
 }
