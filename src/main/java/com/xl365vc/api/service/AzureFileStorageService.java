@@ -25,32 +25,32 @@ import com.xl365vc.api.exception.MyFileNotFoundException;
 import com.xl365vc.api.property.FileStorageProperties;
 import com.xl365vc.api.service.interfaces.FileStorageInterface;
 
-@Service
+@Service("azurefileservice")
 public class AzureFileStorageService implements FileStorageInterface {
 
 	@Autowired
 	private CloudStorageAccount cloudStorageAccount;
 
-	private final String containerName = "xl365vc";
+	private final String containerName = "xl365vc-container";
 	
-    @Autowired
-    public AzureFileStorageService(FileStorageProperties fileStorageProperties) {
-        try {
+//    @Autowired
+//    public AzureFileStorageService(FileStorageProperties fileStorageProperties) {
+//        try {
 //        	createContainerIfNotExists(containerName);
-        } catch (Exception e) {
-            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", e);
-        }
-    }
+//        } catch (Exception e) {
+//            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", e);
+//        }
+//    }
     
-    private void createContainerIfNotExists(String containerName)
-            throws URISyntaxException, StorageException {
-            // Create a blob client.
-            final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
-            // Get a reference to a container. (Name must be lower case.)
-            final CloudBlobContainer container = blobClient.getContainerReference(containerName);
-            // Create the container if it does not exist.
-            container.createIfNotExists();
-      }
+//    private void createContainerIfNotExists(String containerName)
+//            throws URISyntaxException, StorageException {
+//            // Create a blob client.
+//            final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
+//            // Get a reference to a container. (Name must be lower case.)
+//            final CloudBlobContainer container = blobClient.getContainerReference(containerName);
+//            // Create the container if it does not exist.
+//            container.createIfNotExists();
+//      }
 
     @Override
     public String storeFile(MultipartFile file) {

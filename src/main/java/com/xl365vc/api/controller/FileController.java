@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -32,6 +33,7 @@ public class FileController {
 	private static final Logger logger = LoggerFactory.getLogger(FileController.class);
 
 	@Autowired
+	@Qualifier("localfileservice")
 	private FileStorageInterface fileStorageService;
 
 	@PostMapping("/uploadFile")

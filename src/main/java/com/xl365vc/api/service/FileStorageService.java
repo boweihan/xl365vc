@@ -26,7 +26,7 @@ import com.xl365vc.api.exception.MyFileNotFoundException;
 import com.xl365vc.api.property.FileStorageProperties;
 import com.xl365vc.api.service.interfaces.FileStorageInterface;
 
-@Service
+@Service("localfileservice")
 public class FileStorageService implements FileStorageInterface {
 
 	private final Path fileStorageLocation;
