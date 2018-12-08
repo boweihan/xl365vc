@@ -24,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.xl365vc.api.payload.UploadFileResponse;
-import com.xl365vc.api.service.FileStorageService;
 import com.xl365vc.api.service.interfaces.FileStorageInterface;
 
 @RestController

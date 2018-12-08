@@ -13,6 +13,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,12 +39,14 @@ public class FileVersionController {
 	@Qualifier("azurefileservice")
 	private FileStorageInterface fileStorageService;
 
+	@PreAuthorize("#oauth2.hasScope('read')")
 	@GetMapping
 	public FileVersionsResponse getVersions() {
 		List<FileVersion> fileVersions = fileStorageService.getAvailableFiles();
 		return new FileVersionsResponse(fileVersions);
 	}
 
+	@PreAuthorize("#oauth2.hasScope('write')")
 	@PostMapping
     public UploadFileResponse createVersion(@RequestParam("file") MultipartFile file) {
         String fileName = fileStorageService.storeFile(file);
@@ -57,6 +60,7 @@ public class FileVersionController {
                 file.getContentType(), file.getSize());
     }
 
+	@PreAuthorize("#oauth2.hasScope('read')")
     @GetMapping("/{name:.+}")
     public ResponseEntity<Resource> getVersionByName(@PathVariable String name, HttpServletRequest request) {
         // Load file as Resource
@@ -81,6 +85,7 @@ public class FileVersionController {
                 .body(resource);
     }
 
+	@PreAuthorize("#oauth2.hasScope('write')")
 	@DeleteMapping("/{name:.+}")
 	public void removeVersion(@PathVariable("name") String name) {
 		fileStorageService.deleteFile(name);
