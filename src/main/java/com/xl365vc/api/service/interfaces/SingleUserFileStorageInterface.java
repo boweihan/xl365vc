@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.xl365vc.api.entity.FileVersion;
 
-public interface FileStorageInterface {
+public interface SingleUserFileStorageInterface {
 
 	String storeFile(MultipartFile file);
 

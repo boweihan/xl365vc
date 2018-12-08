@@ -24,7 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.xl365vc.api.payload.UploadFileResponse;
-import com.xl365vc.api.service.interfaces.FileStorageInterface;
+import com.xl365vc.api.service.interfaces.SingleUserFileStorageInterface;
 
 @RestController
 public class FileController {
@@ -33,7 +33,7 @@ public class FileController {
 
 	@Autowired
 	@Qualifier("localfileservice")
-	private FileStorageInterface fileStorageService;
+	private SingleUserFileStorageInterface fileStorageService;
 
 	@PostMapping("/uploadFile")
     public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {

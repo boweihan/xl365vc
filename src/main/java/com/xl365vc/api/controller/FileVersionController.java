@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +28,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.xl365vc.api.entity.FileVersion;
 import com.xl365vc.api.payload.FileVersionsResponse;
 import com.xl365vc.api.payload.UploadFileResponse;
-import com.xl365vc.api.service.interfaces.FileStorageInterface;
+import com.xl365vc.api.service.interfaces.SingleUserFileStorageInterface;
 
 @RestController
 @RequestMapping("/versions")
@@ -37,11 +38,11 @@ public class FileVersionController {
 
 	@Autowired
 	@Qualifier("azurefileservice")
-	private FileStorageInterface fileStorageService;
+	private SingleUserFileStorageInterface fileStorageService;
 
 	@PreAuthorize("#oauth2.hasScope('read')")
 	@GetMapping
-	public FileVersionsResponse getVersions() {
+	public FileVersionsResponse getVersions(OAuth2Authentication authentication) {
 		List<FileVersion> fileVersions = fileStorageService.getAvailableFiles();
 		return new FileVersionsResponse(fileVersions);
 	}

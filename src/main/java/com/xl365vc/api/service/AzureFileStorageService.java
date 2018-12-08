@@ -30,10 +30,10 @@ import com.xl365vc.api.entity.FileVersion;
 import com.xl365vc.api.exception.FileStorageException;
 import com.xl365vc.api.exception.MyFileNotFoundException;
 import com.xl365vc.api.property.FileStorageProperties;
-import com.xl365vc.api.service.interfaces.FileStorageInterface;
+import com.xl365vc.api.service.interfaces.SingleUserFileStorageInterface;
 
 @Service("azurefileservice")
-public class AzureFileStorageService implements FileStorageInterface {
+public class AzureFileStorageService implements SingleUserFileStorageInterface {
 
 	@Autowired
 	private CloudStorageAccount cloudStorageAccount;
