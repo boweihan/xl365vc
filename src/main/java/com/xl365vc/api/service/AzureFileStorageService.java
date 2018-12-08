@@ -1,19 +1,17 @@
 package com.xl365vc.api.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -24,25 +22,28 @@ import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.azure.storage.blob.ListBlobItem;
 import com.xl365vc.api.entity.FileVersion;
 import com.xl365vc.api.exception.FileStorageException;
 import com.xl365vc.api.exception.MyFileNotFoundException;
 import com.xl365vc.api.property.FileStorageProperties;
-import com.xl365vc.api.service.interfaces.SingleUserFileStorageInterface;
+import com.xl365vc.api.service.interfaces.MultiUserFileStorageInterface;
 
-@Service("singleuserazurefileservice")
-public class SingleUserAzureFileStorageService implements SingleUserFileStorageInterface {
+@Service("azurefileservice")
+public class AzureFileStorageService implements MultiUserFileStorageInterface {
+
+	@Autowired
+	private Environment env;
 
 	@Autowired
 	private CloudStorageAccount cloudStorageAccount;
-	private final String containerName = "xl365vc-container";
 	
 	private final Path fileStorageLocation;
 
     @Autowired
-    public SingleUserAzureFileStorageService(FileStorageProperties fileStorageProperties) {
+    public AzureFileStorageService(FileStorageProperties fileStorageProperties) {
         this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir())
                 .toAbsolutePath().normalize();
 
@@ -53,32 +54,14 @@ public class SingleUserAzureFileStorageService implements SingleUserFileStorageI
         }
     }
 
-//    @Autowired
-//    public AzureFileStorageService(FileStorageProperties fileStorageProperties) {
-//        try {
-//        	createContainerIfNotExists(containerName);
-//        } catch (Exception e) {
-//            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", e);
-//        }
-//    }
-    
-//    private void createContainerIfNotExists(String containerName)
-//            throws URISyntaxException, StorageException {
-//            // Create a blob client.
-//            final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
-//            // Get a reference to a container. (Name must be lower case.)
-//            final CloudBlobContainer container = blobClient.getContainerReference(containerName);
-//            // Create the container if it does not exist.
-//            container.createIfNotExists();
-//      }
-
     @Override
-    public String storeFile(MultipartFile file) {
+    public String storeFile(String userPrincipal, MultipartFile file) {
     	String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 		try {
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
-	        final CloudBlobContainer container = blobClient.getContainerReference(containerName);
-	        CloudBlockBlob blob = container.getBlockBlobReference(fileName);
+	        final CloudBlobContainer container = blobClient.getContainerReference(env.getProperty("spring.cloud.azure.storage.container"));
+	        final CloudBlobDirectory directory = container.getDirectoryReference(userPrincipal);
+	        CloudBlockBlob blob = directory.getBlockBlobReference(fileName);
 	        blob.upload(file.getInputStream(), file.getSize());
 	        return fileName;
 		} catch (URISyntaxException | StorageException | IOException e) {
@@ -87,12 +70,13 @@ public class SingleUserAzureFileStorageService implements SingleUserFileStorageI
     }
     
     @Override
-    public Resource loadFileAsResource(String fileName) {
+    public Resource loadFileAsResource(String userPrincipal, String fileName) {
         try {
         	fileName = URLDecoder.decode(fileName, "UTF-8");
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
-	        final CloudBlobContainer container = blobClient.getContainerReference(containerName);
-	        CloudBlockBlob blob = container.getBlockBlobReference(fileName);
+	        final CloudBlobContainer container = blobClient.getContainerReference(env.getProperty("spring.cloud.azure.storage.container"));
+	        final CloudBlobDirectory directory = container.getDirectoryReference(userPrincipal);
+	        CloudBlockBlob blob = directory.getBlockBlobReference(fileName);
 	        String tempFilePath = this.fileStorageLocation + "/" + fileName;
 	        // download to temp directory
 	        blob.downloadToFile(tempFilePath);
@@ -111,12 +95,13 @@ public class SingleUserAzureFileStorageService implements SingleUserFileStorageI
     }
     
     @Override
-    public void deleteFile(String fileName) {
+    public void deleteFile(String userPrincipal, String fileName) {
         try {
         	fileName = URLDecoder.decode(fileName, "UTF-8");
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
-	        final CloudBlobContainer container = blobClient.getContainerReference(containerName);
-	        CloudBlockBlob blob = container.getBlockBlobReference(fileName);
+	        final CloudBlobContainer container = blobClient.getContainerReference(env.getProperty("spring.cloud.azure.storage.container"));
+	        final CloudBlobDirectory directory = container.getDirectoryReference(userPrincipal);
+	        CloudBlockBlob blob = directory.getBlockBlobReference(fileName);
 	        blob.delete();
         } catch (URISyntaxException | StorageException | UnsupportedEncodingException e) {
         	throw new FileStorageException("Unable to delete file", e);
@@ -124,14 +109,15 @@ public class SingleUserAzureFileStorageService implements SingleUserFileStorageI
     }
 
     @Override
-    public List<FileVersion> getAvailableFiles() {
+    public List<FileVersion> getAvailableFiles(String userPrincipal) {
     	List<FileVersion> fileNames = new ArrayList<>();
     	
         try {
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
-	        final CloudBlobContainer container = blobClient.getContainerReference(containerName);
+	        final CloudBlobContainer container = blobClient.getContainerReference(env.getProperty("spring.cloud.azure.storage.container"));
+	        final CloudBlobDirectory directory = container.getDirectoryReference(userPrincipal);
 
-	        for (ListBlobItem blob : container.listBlobs()) {
+	        for (ListBlobItem blob : directory.listBlobs()) {
 	        	String[] uriSegments = blob.getUri().toString().split("/");
 				fileNames.add(
 					new FileVersion(

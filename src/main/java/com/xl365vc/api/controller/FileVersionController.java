@@ -28,7 +28,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.xl365vc.api.entity.FileVersion;
 import com.xl365vc.api.payload.FileVersionsResponse;
 import com.xl365vc.api.payload.UploadFileResponse;
-import com.xl365vc.api.service.interfaces.SingleUserFileStorageInterface;
+import com.xl365vc.api.service.interfaces.MultiUserFileStorageInterface;
 
 @RestController
 @RequestMapping("/versions")
@@ -38,19 +38,24 @@ public class FileVersionController {
 
 	@Autowired
 	@Qualifier("azurefileservice")
-	private SingleUserFileStorageInterface fileStorageService;
+	private MultiUserFileStorageInterface fileStorageService;
 
 	@PreAuthorize("#oauth2.hasScope('read')")
 	@GetMapping
 	public FileVersionsResponse getVersions(OAuth2Authentication authentication) {
-		List<FileVersion> fileVersions = fileStorageService.getAvailableFiles();
+		String userPrincipal = authentication.getPrincipal().toString();
+		List<FileVersion> fileVersions = fileStorageService.getAvailableFiles(userPrincipal);
 		return new FileVersionsResponse(fileVersions);
 	}
 
 	@PreAuthorize("#oauth2.hasScope('write')")
 	@PostMapping
-    public UploadFileResponse createVersion(@RequestParam("file") MultipartFile file) {
-        String fileName = fileStorageService.storeFile(file);
+    public UploadFileResponse createVersion(
+    		OAuth2Authentication authentication,
+    		@RequestParam("file") MultipartFile file
+    	) {
+		String userPrincipal = authentication.getPrincipal().toString();
+        String fileName = fileStorageService.storeFile(userPrincipal, file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/downloadFile/")
@@ -63,9 +68,14 @@ public class FileVersionController {
 
 	@PreAuthorize("#oauth2.hasScope('read')")
     @GetMapping("/{name:.+}")
-    public ResponseEntity<Resource> getVersionByName(@PathVariable String name, HttpServletRequest request) {
+    public ResponseEntity<Resource> getVersionByName(
+    		OAuth2Authentication authentication,
+    		@PathVariable String name,
+    		HttpServletRequest request
+    	) {
+		String userPrincipal = authentication.getPrincipal().toString();
         // Load file as Resource
-        Resource resource = fileStorageService.loadFileAsResource(name);
+        Resource resource = fileStorageService.loadFileAsResource(userPrincipal, name);
 
         // Try to determine file's content type
         String contentType = null;
@@ -88,7 +98,11 @@ public class FileVersionController {
 
 	@PreAuthorize("#oauth2.hasScope('write')")
 	@DeleteMapping("/{name:.+}")
-	public void removeVersion(@PathVariable("name") String name) {
-		fileStorageService.deleteFile(name);
+	public void removeVersion(
+			OAuth2Authentication authentication,
+			@PathVariable("name") String fileName
+		) {
+		String userPrincipal = authentication.getPrincipal().toString();
+		fileStorageService.deleteFile(userPrincipal, fileName);
 	}
 }

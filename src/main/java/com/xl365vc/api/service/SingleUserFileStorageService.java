@@ -27,12 +27,12 @@ import com.xl365vc.api.property.FileStorageProperties;
 import com.xl365vc.api.service.interfaces.SingleUserFileStorageInterface;
 
 @Service("localfileservice")
-public class FileStorageService implements SingleUserFileStorageInterface {
+public class SingleUserFileStorageService implements SingleUserFileStorageInterface {
 
 	private final Path fileStorageLocation;
 	
     @Autowired
-    public FileStorageService(FileStorageProperties fileStorageProperties) {
+    public SingleUserFileStorageService(FileStorageProperties fileStorageProperties) {
         this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir())
                 .toAbsolutePath().normalize();
 
