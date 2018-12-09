@@ -55,13 +55,14 @@ public class AzureFileStorageService implements MultiUserFileStorageInterface {
     }
 
     @Override
-    public String storeFile(String userPrincipal, MultipartFile file) {
+    public String storeFile(String userPrincipal, String fileId, MultipartFile file) {
     	String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 		try {
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
 	        final CloudBlobContainer container = blobClient.getContainerReference(env.getProperty("spring.cloud.azure.storage.container"));
-	        final CloudBlobDirectory directory = container.getDirectoryReference(userPrincipal);
-	        CloudBlockBlob blob = directory.getBlockBlobReference(fileName);
+	        final CloudBlobDirectory userDirectory = container.getDirectoryReference(userPrincipal);
+	        final CloudBlobDirectory fileDirectory = userDirectory.getDirectoryReference(fileId);
+	        final CloudBlockBlob blob = fileDirectory.getBlockBlobReference(fileName);
 	        blob.upload(file.getInputStream(), file.getSize());
 	        return fileName;
 		} catch (URISyntaxException | StorageException | IOException e) {
@@ -70,13 +71,14 @@ public class AzureFileStorageService implements MultiUserFileStorageInterface {
     }
     
     @Override
-    public Resource loadFileAsResource(String userPrincipal, String fileName) {
+    public Resource loadFileAsResource(String userPrincipal, String fileId, String fileName) {
         try {
         	fileName = URLDecoder.decode(fileName, "UTF-8");
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
 	        final CloudBlobContainer container = blobClient.getContainerReference(env.getProperty("spring.cloud.azure.storage.container"));
-	        final CloudBlobDirectory directory = container.getDirectoryReference(userPrincipal);
-	        CloudBlockBlob blob = directory.getBlockBlobReference(fileName);
+	        final CloudBlobDirectory userDirectory = container.getDirectoryReference(userPrincipal);
+	        final CloudBlobDirectory fileDirectory = userDirectory.getDirectoryReference(fileId);
+	        final CloudBlockBlob blob = fileDirectory.getBlockBlobReference(fileName);
 	        String tempFilePath = this.fileStorageLocation + "/" + fileName;
 	        // download to temp directory
 	        blob.downloadToFile(tempFilePath);
@@ -95,13 +97,14 @@ public class AzureFileStorageService implements MultiUserFileStorageInterface {
     }
     
     @Override
-    public void deleteFile(String userPrincipal, String fileName) {
+    public void deleteFile(String userPrincipal, String fileId, String fileName) {
         try {
         	fileName = URLDecoder.decode(fileName, "UTF-8");
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
 	        final CloudBlobContainer container = blobClient.getContainerReference(env.getProperty("spring.cloud.azure.storage.container"));
-	        final CloudBlobDirectory directory = container.getDirectoryReference(userPrincipal);
-	        CloudBlockBlob blob = directory.getBlockBlobReference(fileName);
+	        final CloudBlobDirectory userDirectory = container.getDirectoryReference(userPrincipal);
+	        final CloudBlobDirectory fileDirectory = userDirectory.getDirectoryReference(fileId);
+	        final CloudBlockBlob blob = fileDirectory.getBlockBlobReference(fileName);
 	        blob.delete();
         } catch (URISyntaxException | StorageException | UnsupportedEncodingException e) {
         	throw new FileStorageException("Unable to delete file", e);
@@ -109,15 +112,16 @@ public class AzureFileStorageService implements MultiUserFileStorageInterface {
     }
 
     @Override
-    public List<FileVersion> getAvailableFiles(String userPrincipal) {
+    public List<FileVersion> getAvailableFiles(String userPrincipal, String fileId) {
     	List<FileVersion> fileNames = new ArrayList<>();
     	
         try {
 	        final CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
 	        final CloudBlobContainer container = blobClient.getContainerReference(env.getProperty("spring.cloud.azure.storage.container"));
-	        final CloudBlobDirectory directory = container.getDirectoryReference(userPrincipal);
+	        final CloudBlobDirectory userDirectory = container.getDirectoryReference(userPrincipal);
+	        final CloudBlobDirectory fileDirectory = userDirectory.getDirectoryReference(fileId);
 
-	        for (ListBlobItem blob : directory.listBlobs()) {
+	        for (ListBlobItem blob : fileDirectory.listBlobs()) {
 	        	String[] uriSegments = blob.getUri().toString().split("/");
 				fileNames.add(
 					new FileVersion(

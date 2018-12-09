@@ -31,7 +31,7 @@ import com.xl365vc.api.payload.UploadFileResponse;
 import com.xl365vc.api.service.interfaces.MultiUserFileStorageInterface;
 
 @RestController
-@RequestMapping("/versions")
+@RequestMapping("file/{fileId}/versions")
 public class FileVersionController {
 	
 	private static final Logger logger = LoggerFactory.getLogger(FileVersionController.class);
@@ -42,9 +42,12 @@ public class FileVersionController {
 
 	@PreAuthorize("#oauth2.hasScope('read')")
 	@GetMapping
-	public FileVersionsResponse getVersions(OAuth2Authentication authentication) {
+	public FileVersionsResponse getVersions(
+			OAuth2Authentication authentication,
+			@PathVariable("fileId") String fileId
+		) {
 		String userPrincipal = authentication.getPrincipal().toString();
-		List<FileVersion> fileVersions = fileStorageService.getAvailableFiles(userPrincipal);
+		List<FileVersion> fileVersions = fileStorageService.getAvailableFiles(userPrincipal, fileId);
 		return new FileVersionsResponse(fileVersions);
 	}
 
@@ -52,10 +55,11 @@ public class FileVersionController {
 	@PostMapping
     public UploadFileResponse createVersion(
     		OAuth2Authentication authentication,
+    		@PathVariable("fileId") String fileId,
     		@RequestParam("file") MultipartFile file
     	) {
 		String userPrincipal = authentication.getPrincipal().toString();
-        String fileName = fileStorageService.storeFile(userPrincipal, file);
+        String fileName = fileStorageService.storeFile(userPrincipal, fileId, file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/downloadFile/")
@@ -70,12 +74,13 @@ public class FileVersionController {
     @GetMapping("/{name:.+}")
     public ResponseEntity<Resource> getVersionByName(
     		OAuth2Authentication authentication,
-    		@PathVariable String name,
+    		@PathVariable("fileId") String fileId,
+    		@PathVariable("name") String name,
     		HttpServletRequest request
     	) {
 		String userPrincipal = authentication.getPrincipal().toString();
         // Load file as Resource
-        Resource resource = fileStorageService.loadFileAsResource(userPrincipal, name);
+        Resource resource = fileStorageService.loadFileAsResource(userPrincipal, fileId, name);
 
         // Try to determine file's content type
         String contentType = null;
@@ -100,9 +105,10 @@ public class FileVersionController {
 	@DeleteMapping("/{name:.+}")
 	public void removeVersion(
 			OAuth2Authentication authentication,
+			@PathVariable("fileId") String fileId,
 			@PathVariable("name") String fileName
 		) {
 		String userPrincipal = authentication.getPrincipal().toString();
-		fileStorageService.deleteFile(userPrincipal, fileName);
+		fileStorageService.deleteFile(userPrincipal, fileId, fileName);
 	}
 }
