@@ -122,10 +122,12 @@ public class AzureFileStorageService implements MultiUserFileStorageInterface {
 	        final CloudBlobDirectory fileDirectory = userDirectory.getDirectoryReference(fileId);
 
 	        for (ListBlobItem blob : fileDirectory.listBlobs()) {
+	        	CloudBlockBlob blobe = (CloudBlockBlob) blob;
 	        	String[] uriSegments = blob.getUri().toString().split("/");
 				fileNames.add(
 					new FileVersion(
-						uriSegments[uriSegments.length - 1]
+						uriSegments[uriSegments.length - 1],
+						blobe.getProperties().getLastModified().toInstant()
 					)
 				);
 	        }

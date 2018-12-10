@@ -132,10 +132,12 @@ public class SingleUserAzureFileStorageService implements SingleUserFileStorageI
 	        final CloudBlobContainer container = blobClient.getContainerReference(containerName);
 
 	        for (ListBlobItem blob : container.listBlobs()) {
+	        	CloudBlockBlob blobe = (CloudBlockBlob) blob;
 	        	String[] uriSegments = blob.getUri().toString().split("/");
 				fileNames.add(
 					new FileVersion(
-						uriSegments[uriSegments.length - 1]
+						uriSegments[uriSegments.length - 1],
+						blobe.getProperties().getLastModified().toInstant()
 					)
 				);
 	        }
